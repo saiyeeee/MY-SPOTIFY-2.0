@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAI MUSIC PLAYER</title>
+
+<style>
+:root{
+  --accent:#6c5ce7;
+  --accent2:#00cec9;
+  --bg:#0f1226;
+  --card:#1c1f3a;
+}
+
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+
+body{
+  margin:0;
+  display:flex;
+  background: radial-gradient(circle at top, #6c5ce733, #0f1226);
+  color:white;
+}
+
+/* SIDEBAR */
+.sidebar{
+  width:230px;
+  background:#0a0c1f;
+  padding:20px;
+  height:100vh;
+  border-right:1px solid #ffffff10;
+}
+
+.sidebar h2{
+  background:linear-gradient(45deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;
+  color:transparent;
+}
+
+.sidebar div{
+  margin:15px 0;
+  opacity:.7;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.sidebar div:hover{
+  opacity:1;
+  color:var(--accent);
+  transform:translateX(6px);
+}
+
+/* MAIN */
+.main{
+  flex:1;
+  padding:25px;
+}
+
+.search{
+  width:100%;
+  padding:14px;
+  border-radius:40px;
+  border:none;
+  background:#ffffff10;
+  color:white;
+  margin-bottom:25px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:25px;
+}
+
+.album{
+  background:var(--card);
+  border-radius:20px;
+  padding:12px;
+  cursor:pointer;
+  transition:.4s;
+  position:relative;
+  overflow:hidden;
+}
+
+.album:hover{
+  transform:translateY(-10px) scale(1.05);
+  box-shadow:0 20px 40px #00000088;
+}
+
+.album::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(120deg,transparent,#ffffff22,transparent);
+  opacity:0;
+  transition:.4s;
+}
+
+.album:hover::before{opacity:1}
+
+.album img{
+  width:100%;
+  border-radius:14px;
+}
+
+.album h3{margin-top:10px}
+
+.play-btn{
+  position:absolute;
+  bottom:60px;
+  right:15px;
+  background:linear-gradient(45deg,var(--accent),var(--accent2));
+  border-radius:50%;
+  padding:12px;
+  opacity:0;
+  transform:scale(.8);
+  transition:.3s;
+}
+
+.album:hover .play-btn{
+  opacity:1;
+  transform:scale(1);
+}
+
+/* SONGS */
+.album-view{display:none;animation:fade .4s ease}
+
+.song{
+  padding:12px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.song:hover{background:#ffffff10}
+
+.song.active{
+  background:#6c5ce722;
+  color:var(--accent2);
+}
+
+/* PLAYER */
+.player{
+  position:fixed;
+  bottom:0;
+  left:230px;
+  right:0;
+  padding:15px;
+  backdrop-filter:blur(25px);
+  background:linear-gradient(90deg,#0f1226cc,#6c5ce722);
+  border-top:1px solid #ffffff10;
+}
+
+#nowPlaying{
+  font-weight:bold;
+  margin-bottom:5px;
+}
+
+.controls button{
+  background:none;
+  border:1px solid var(--accent);
+  color:white;
+  padding:8px 14px;
+  border-radius:30px;
+  margin:4px;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.controls button:hover{
+  background:var(--accent);
+  transform:scale(1.1);
+}
+
+/* PROGRESS BAR */
+#progress{
+  appearance:none;
+  height:6px;
+  border-radius:10px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+}
+
+#volume{margin-top:5px}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+@media(max-width:700px){
+  .sidebar{display:none}
+  .player{left:0}
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h2>My Music</h2>
+  <div onclick="showHome()">🏠 Home</div>
+  <div>🎧 Library</div>
+</div>
+
+<div class="main">
+  <input class="search" placeholder="Search your vibe..." oninput="searchSongs(this.value)">
+  <div id="home" class="grid"></div>
+  <div id="albumView" class="album-view"></div>
+</div>
+
+<div class="player">
+  <div id="nowPlaying">Nothing playing</div>
+  <audio id="audio"></audio>
+
+  <div class="controls">
+    <button onclick="prevSong()">⏮</button>
+    <button onclick="togglePlay()">⏯</button>
+    <button onclick="nextSong()">⏭</button>
+  </div>
+
+  <input type="range" id="progress">
+  <input type="range" id="volume" min="0" max="1" step="0.01" value="1">
+</div>
+
+<script>
+    const albums = [
+  {
+    id: 0,
+    title: "NIKI's Album",
+    artist: "NIKI",
+    cover: "Niki backburner.jpeg",
+    songs: [
+      { title: "Backburner",duration: "3:53", src: "NIKI - Backburner Official Lyric Video.mp3" },
+      { title: "Lowkey",duration: "2:50", src: "NIKI - lowkey Lyrics.mp3" },
+      { title: "Oceans Engines",duration: "5:45", src: "\NIKI - Oceans  Engines Lyrics.mp3" },
+      { title: "Take a Chance With Me",duration: "5:01", src:"\NIKI - Take A Chance With Me Lyrics.mp3" },
+      { title: "Youll be in my heart",duration: "4:00", src: "\NIKI - Youll be in my heart.mp3" },
+    ]
+  },
+  {
+    id: 1,
+    title: "Cup of Joe's Album ",
+    artist: "cup of Joe",
+    cover: "cup of joe pic.jpg",
+    songs: [
+      { title: "Pahina", duration: "4:10", src:"Cup of Joe - Pahina Lyrics.mp3"  },
+      { title: "Multo", duration: "3:56", src: "Cup of Joe - Multo Lyrics.mp3" },
+      { title: "Tingin",duration: "4:03", src:"Cup of Joe Janine Teoso - _Tingin_ Official Lyric Video.mp3"  },
+      { title: "Ikaw Pa Rin Ang Pipiliin Ko",duration: "5:00", src: "Ikaw Pa Rin Ang Pipiliin Ko - Cup of Joe Official Lyric Video Visualizer.mp3" },
+      { title: "Misteryoso",duration: "5:44", src: "Misteryoso - Cup of Joe Official Music Video.mp3" },
+    ]
+  },
+  {
+    id: 2,
+    title: "Daniel Caesar's Album",
+    artist: "Daniel Caesar",
+    cover: "daniel caesar pic.jpg",
+    songs: [
+      { title: "Always", duration: "3:39", src: "Daniel Caesar - Always Lyrics.mp3" },
+      { title: "Best Part", duration: "3:38", src:"Daniel Caesar  HER - Best Part Lyrics.mp3"},
+      { title: "Disillussioned", duration: "3:59", src: "Daniel Caesar - Disillusioned Official Lyric Video.mp3" },
+      { title: "Get You", duration: "4:36", src: "Daniel Caesar - Get You Lyrics ft Kali Uchis.mp3" },
+      { title: "Hold Me Down", duration: "3:51", src: "Hold Me Down.mp3" },
+    ]
+  },
+  {
+    id: 3,
+    title: "Bruno Mars's Album",
+    artist: "Bruno Mars",
+    cover: "bruno mars pic.jpg",
+    songs: [
+      { title: "Risk It All",duration: "3:24", src: "Bruno Mars - Risk It All.mp3" },
+      { title: "Just The Way You Are",duration: "3:56", src: "Bruno Mars - Just The Way You Are Official Music Video.mp3" },
+      { title: "Thats What I Like", duration: "3:30", src: "Bruno Mars - Thats What I Like Official Music Video.mp3" },
+      { title: "Versace On The Floor",duration: "4:18", src: "Bruno Mars - Versace On The Floor.mp3" },
+      { title: "When I was Your Man",duration: "3:54", src: "Bruno Mars - When I Was Your Man Official Music Video.mp3" },
+    ]
+  },
+  {
+    id: 4,
+    title: "Justin Bieber's Album",
+    artist: "Justin Bieber",
+    cover: "justin beiber pic.jpg",
+    songs: [
+      { title: "Anyone",duration: "3:10", src: "Justin Bieber - Anyone Lyrics.mp3" },
+      { title: "Beauty And The Beat",duration: "3:46", src: "Justin Bieber - Beauty And A Beat Lyrics ft Nicki Minaj.mp3" },
+      { title: "Confident",duration: "4:07", src: "Justin Bieber - Confident Lyrics _she said its her first time_.mp3" },
+      { title: "Favorite Girl", duration: "4:16", src: "Justin Bieber - Favorite Girl Lyrics.mp3" },
+      { title: "Never Say Never",duration: "3:49", src: "Justin Bieber - Never Say Never Lyrics ft Jaden Smith.mp3" },
+    ]
+  }
+];
+
+const home=document.getElementById('home');
+const albumView=document.getElementById('albumView');
+const audio=document.getElementById('audio');
+const nowPlaying=document.getElementById('nowPlaying');
+const progress=document.getElementById('progress');
+const volume=document.getElementById('volume');
+
+let currentAlbum=0,currentSong=0;
+
+function renderHome(){
+  home.innerHTML='';
+  albums.forEach((a,i)=>{
+    const div=document.createElement('div');
+    div.className='album';
+    div.innerHTML=`
+      <img src='${a.cover}'>
+      <div class='play-btn'>▶</div>
+      <h3>${a.title}</h3>
+    `;
+    div.onclick=()=>openAlbum(i);
+    home.appendChild(div);
+  });
+}
+
+function openAlbum(i){
+  home.style.display='none';
+  albumView.style.display='block';
+  const a=albums[i];
+  albumView.innerHTML=`<h2>${a.title}</h2>`;
+
+  a.songs.forEach((s,j)=>{
+    const div=document.createElement('div');
+    div.className='song';
+    div.textContent=`${s.title} - ${a.artist}`;
+    div.onclick=()=>playSong(i,j);
+    albumView.appendChild(div);
+  });
+}
+
+function showHome(){
+  albumView.style.display='none';
+  home.style.display='grid';
+}
+
+function playSong(a,s){
+  currentAlbum=a;currentSong=s;
+  const song=albums[a].songs[s];
+  audio.src=song.src;
+  audio.play();
+
+  nowPlaying.textContent=`🎵 ${song.title} - ${albums[a].artist}`;
+
+  document.querySelectorAll('.song').forEach(el=>el.classList.remove('active'));
+  if(document.querySelectorAll('.song')[s])
+    document.querySelectorAll('.song')[s].classList.add('active');
+}
+
+function togglePlay(){audio.paused?audio.play():audio.pause();}
+function nextSong(){playSong(currentAlbum,(currentSong+1)%5);}
+function prevSong(){playSong(currentAlbum,(currentSong+4)%5);}
+
+audio.ontimeupdate=()=>{
+  progress.max=audio.duration;
+  progress.value=audio.currentTime;
+};
+progress.oninput=()=>audio.currentTime=progress.value;
+volume.oninput=()=>audio.volume=volume.value;
+
+function searchSongs(q){
+  q=q.toLowerCase();
+  home.innerHTML='';
+  albums.forEach((a,i)=>{
+    a.songs.forEach((s,j)=>{
+      if(s.title.toLowerCase().includes(q)){
+        const div=document.createElement('div');
+        div.className='album';
+        div.innerHTML=`<h4>${s.title}</h4><p>${a.title}</p>`;
+        div.onclick=()=>playSong(i,j);
+        home.appendChild(div);
+      }
+    });
+  });
+}
+
+renderHome();
+</script>
+
+</body>
+</html>
